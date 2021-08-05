@@ -63,7 +63,7 @@ def test4_NON_VALID_FUNCTION(app, qtbot):
     app.upperXField.setText("10")
     app.InputFunctionField.setText("np.sqrt(x)")
     qtbot.mouseClick(app.button, QtCore.Qt.LeftButton)
-    assert app.errorMessage == app.errorMessageNonValidFunction
+    assert app.errorMessageNonValidFunction in app.errorMessage  # as the message contains the error description
 
 def test5_VALID_FUNCTION(app, qtbot): #normal function
     app.lowerXField.setText("-10")
@@ -94,14 +94,14 @@ def test8_VALID_FUNCTION(app, qtbot): #normal function with differnet limits
     qtbot.mouseClick(app.button, QtCore.Qt.LeftButton)
     assert app.errorMessage == None
 
-def test8_VALID_FUNCTION(app, qtbot): #normal function with differnet limits
+def test9_VALID_FUNCTION(app, qtbot): #normal function with differnet limits
     app.lowerXField.setText("-1e5")
     app.upperXField.setText("1e5")
-    app.InputFunctionField.setText("5*X^2+3*X")
+    app.InputFunctionField.setText("5*X^2+3*X/3*4-6")
     qtbot.mouseClick(app.button, QtCore.Qt.LeftButton)
     assert app.errorMessage == None
 
-def test9_VALID_FUNCTION(app, qtbot): # extreme function
+def test10_VALID_FUNCTION(app, qtbot): # extreme function
     app.lowerXField.setText("-1e-5")
     app.upperXField.setText("0.5")
     app.InputFunctionField.setText("sqrt(sin(e^(x^2)) + 180) / 5*cos(log(X + 5) - 270)")

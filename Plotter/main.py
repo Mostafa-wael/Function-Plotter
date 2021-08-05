@@ -39,7 +39,7 @@ class Plotter(QDialog):
         self.errorMessageMissingFields = "Please, complete all the fields"
         self.errorMessageLimitsNotNumeric = "Limits Must be Numbers Only"
         self.errorMessageLimitsNotOrdered = "Upper limits must be greater than lower limit, we have exchanged them for you!"
-        self.errorMessageNonValidFunction = "Please, enter a valid function"
+        self.errorMessageNonValidFunction = "Non-valid function"
         
         # create
         self.__createLayout()
@@ -137,7 +137,7 @@ class Plotter(QDialog):
             self.setStyleSheet("QMessageBox{background:  self.primaryColor; }"); # change the color theme in case of an error
             self.msgBox.warning(self, "Error", self.errorMessage, QMessageBox.Ok, QMessageBox.Ok)
             self.setStyleSheet("background-color:" + MAIN_WINDOW_SECONDARY_COLOR + ";"); # return the color theme to its original
-
+            self.errorMessage = None
     def __validateInput(self, fx: str, ux:str, lx:str) -> bool:
         """ used to validate the input fields
 
@@ -215,8 +215,8 @@ class Plotter(QDialog):
                 x = np.linspace(self.lowerX, self.upperX) # create the data on the x-axis
                 y = eval(self.inputFunction) # evalute the function
                 self.plot(x, y) 
-            except:
-                self.errorMessage = self.errorMessageNonValidFunction
+            except Exception as e:
+                self.errorMessage = self.errorMessageNonValidFunction + ", " + str(e)
                 self.__showErrorMessage()
 
 ################################################################
