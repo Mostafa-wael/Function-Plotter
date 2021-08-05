@@ -1,135 +1,108 @@
-# Imports
 import random
 import sys
-import numpy as np
+
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_qt5agg import \
     FigureCanvasQTAgg as FigureCanvas
 from matplotlib.backends.backend_qt5agg import \
     NavigationToolbar2QT as NavigationToolbar
-from PyQt5.QtWidgets import QApplication, QDialog, QPushButton, QVBoxLayout, QMainWindow
+from PySide2.QtGui import QIcon
+from PySide2.QtWidgets import (QApplication, QDialog, QGridLayout, QLabel,
+                               QLineEdit, QMessageBox, QPushButton,
+                               QVBoxLayout, QWidget)
 
-from PyQt5.QtWidgets import * 
-from PyQt5 import QtCore, QtGui
-from PyQt5.QtGui import * 
-from PyQt5.QtCore import * 
-from PyQt5.QtWidgets import (QApplication, QWidget, QPushButton, 
-QLineEdit, QInputDialog)
-from PyQt5.QtWidgets import QApplication, QDialog, QPushButton, QVBoxLayout, QMainWindow
-from PyQt5.QtWidgets import QApplication, QWidget, QPushButton, QLineEdit, QInputDialog
-from PyQt5.QtWidgets import QMainWindow, QApplication, QWidget, QPushButton, QAction, QLineEdit, QMessageBox
-from PyQt5.QtGui import QIcon
-from PyQt5.QtCore import pyqtSlot
 ################################################################
-# Constants
+#Constants
 NUMBER_OF_SAMPLES = 50
 MAIN_WINDOW_TITLE = "Plotter"
 MAIN_WINDOW_LEFT = 80
 MAIN_WINDOW_TOP = 80
-MAIN_WINDOW_WIDTH = 1000
-MAIN_WINDOW_HEIGHT = 900
-# attributes
+MAIN_WINDOW_WIDTH = 600
+MAIN_WINDOW_HEIGHT = 600
 ################################################################
-class mainWindow(QDialog):
-    def __init__(self):
+
+class Plotter(QDialog):
+    def __init__(self, parent=None):
         super().__init__()
+        # main window
         self.setWindowTitle(MAIN_WINDOW_TITLE)
         self.setGeometry(MAIN_WINDOW_LEFT, MAIN_WINDOW_TOP, MAIN_WINDOW_WIDTH, MAIN_WINDOW_HEIGHT)
+        
+        # attributes
+        self.x = list(range(NUMBER_OF_SAMPLES))
+        self.y = list(range(NUMBER_OF_SAMPLES))
+        
+        # create
+        self.createLayout()
 
-        #create widgets
-        self.__createLayout()
-        self.__setLayout()
-
-    def __createCanvasWidget(self):
+    def createCanvasWidget(self):
         # a figure instance to plot on
         self.figure = plt.figure()
-        
         # this is the Canvas Widget that displays the `figure`
         # it takes the `figure` instance as a parameter to __init__
         self.canvas = FigureCanvas(self.figure)
-
         # create an axis
-        ax = self.figure.add_subplot(111)
-        self.canvas.axes = ax
-
+        self.canvas.axes = self.figure.add_subplot(111)
         # this is the Navigation widget
         # it takes the Canvas widget and a parent
         self.toolbar = NavigationToolbar(self.canvas, self)
         
-    def __createTextBox(self):
-        # Create textbox
-        self.textbox = QLineEdit(self)
-        self.textbox.move(20, 20)
-        self.textbox.resize(280,40)
-        self.textbox.setText("e**X")
+    def createButton(self):
+        # Just some button connected to `plot` method
+        self.button = QPushButton('Plot')
+        self.button.clicked.connect(self.onClick)
+    
+    def createInputFunction(self):
+        self.InputFunctionField = QLineEdit(self)   
+        self.InputFunctionField.move(60,60)
 
-    def __createButton(self):
-        # Create a button in the window
-        self.button = QPushButton('Plot', self)
-        self.button.move(20,80)
-        # connect button to function on_click
-        self.button.clicked.connect(self.on_click)
+        self.InputFunctionLabel = QLabel("f(x)")
+        self.InputFunctionLabel.move(20,20)
 
-    def __createLayout(self):
-        self.__createCanvasWidget()
-        self.__createTextBox()
-        self.__createButton()
+    def createLayout(self):
+        self.createCanvasWidget()
+        self.createButton()
+        self.createInputFunction()
+        self.styleLayout()
 
-    def __setLayout(self):
+    def styleLayout(self):
         # set the layout
         layout = QVBoxLayout()
         layout.addWidget(self.toolbar)
         layout.addWidget(self.canvas)
-        layout.addWidget(self.textbox)
+        layout.addWidget(self.InputFunctionLabel)
+        layout.addWidget(self.InputFunctionField)
         layout.addWidget(self.button)
         self.setLayout(layout)
 
-    def __checkInputs(self):
-        inputFunc = self.textbox.text().lower()
-        inputFunc = inputFunc.replace(" ", "")
-        inputFunc = inputFunc.replace("^", "**")
-        # inputFunc = inputFunc.replace("sqrt", "np.sqrt")
-        inputFunc = inputFunc.replace("e**", "np.exp")
-        inputFunc = inputFunc.replace("log", "np.log")
-        inputFunc = inputFunc.replace("sin", "np.sin")
-        inputFunc = inputFunc.replace("cos", "np.cos")
-        inputFunc = inputFunc.replace("tan", "np.tan")
-        return inputFunc
+    def plot(self, x, y):
+        ''' plot some random stuff '''
+        # random data
+        data = [random.random() for i in range(10)]
 
-    @pyqtSlot()
-    def on_click(self):
-        inputFunc = self.__checkInputs()
-        x = []
-        y = []
-        try:
-            x = np.linspace(0, 100, NUMBER_OF_SAMPLES)
-            y = eval(inputFunc)
-        except:
-            QMessageBox.question(self, 'Error', "You typed: " + inputFunc + " which is wrong!", QMessageBox.Ok, QMessageBox.Ok)
-        # try:
-        #     len(y)
-        # except:
-        #     y = np.full(len(x), y)
-
+        # instead of ax.hold(False)
+        self.figure.clear()
         self.canvas.axes.cla()  # Clear the canvas.
-        self.canvas.axes.plot(x, y, 'r')
+
+        # create an axis
+        self.canvas.axes = self.figure.add_subplot(111)
+
+        # plot data
+        self.canvas.axes.plot(data, '*-')
+
         # refresh canvas
         self.canvas.draw()
 
-        
-            
-    @pyqtSlot()
-    def plot(self):  
-        pass
-  
-###############################################################
+    def onClick(self):
+        self.plot(self.x, self.y)
+
 def run():
     app = QApplication(sys.argv)
 
-    main = mainWindow()
+    main = Plotter()
     main.show()
 
-    sys.exit(main.exec_())
+    sys.exit(app.exec_())
 
 if __name__ == '__main__':
     run()
