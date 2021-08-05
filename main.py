@@ -2,22 +2,15 @@ import random
 import sys
 
 import matplotlib.pyplot as plt
+
 plt.style.use('dark_background')
 import numpy as np
-from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
-from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar
+from matplotlib.backends.backend_qt5agg import \
+    FigureCanvasQTAgg as FigureCanvas
+from matplotlib.backends.backend_qt5agg import \
+    NavigationToolbar2QT as NavigationToolbar
 from PySide2.QtGui import QIcon
-from PySide2.QtWidgets import (
-    QApplication,
-    QDialog,
-    QGridLayout,
-    QLabel,
-    QLineEdit,
-    QMessageBox,
-    QPushButton,
-    QVBoxLayout,
-    QWidget,
-)
+from PySide2.QtWidgets import QApplication, QDialog, QGridLayout, QLabel, QLineEdit, QMessageBox, QPushButton, QVBoxLayout
 
 ################################################################
 # Constants
@@ -41,8 +34,16 @@ class Plotter(QDialog):
         self.setStyleSheet("background-color:black;");
         self.autoFillBackground = True
 
+        # error messages and testing
+        self.testingMode = False
+        self.msgBox = QMessageBox() 
+        self.errorMessage = None
+        self.errorMessageMissingFields = "Please, complete all the fields"
+        self.errorMessageLimitsNotNumeric = "Limits Must be Numbers Only"
+        self.errorMessageLimitsNotOrdered = "Upper limits must be greater than lower limit, we have exchaned them for you!"
+        self.errorMessageNonValidFunction = "Please, enter a valid function"
+        
         # attributes
-        self.errorMessage = ""
         self.primaryColor =  "#0f9fbf"
 
         # create
@@ -120,14 +121,15 @@ class Plotter(QDialog):
         self.setLayout(layout)
 
     def showErrorMessage(self):
-        if self.errorMessage != "":     
-            QMessageBox.warning(self, "Error!", self.errorMessage, QMessageBox.Ok, QMessageBox.Ok)
-            self.errorMessage = ""
+        if self.testingMode == False and self.errorMessage != "":    
+            self.setStyleSheet("QMessageBox{background:  self.primaryColor; }");
+            self.msgBox.warning(self, "Error", self.errorMessage, QMessageBox.Ok, QMessageBox.Ok)
+            self.setStyleSheet("background-color:black;");
 
     def validateInput(self, fx, ux, lx):
         # validate the input fields
         if fx == "" or ux == "" or lx == "":
-            self.errorMessage = "Please, complete all the fields"
+            self.errorMessage = self.errorMessageMissingFields
             self.showErrorMessage()
             return False
 
@@ -139,13 +141,13 @@ class Plotter(QDialog):
             self.upperX = float(self.upperX)
             self.lowerX = float(self.lowerX)
         except:
-            self.errorMessage = "Limits Must be Numbers Only"
+            self.errorMessage =  self.errorMessageLimitsNotNumeric
             self.showErrorMessage()
             return False
         
         # check for inquality
         if self.lowerX > self.upperX:
-            self.errorMessage = "Upper limits must be greater than lower limit, we have exchaned them for you!"
+            self.errorMessage = self.errorMessageLimitsNotOrdered
             self.upperXField.setText(str(self.lowerX))
             self.lowerXField.setText(str(self.upperX))
             self.lowerX, self.upperX = self.upperX, self.lowerX
@@ -162,7 +164,7 @@ class Plotter(QDialog):
             self.inputFunction = self.inputFunction.replace("cos", "np.cos")
             self.inputFunction = self.inputFunction.replace("tan", "np.tan")
         except:
-            self.errorMessage = "Please, enter a valid function, NOT VALID"
+            self.errorMessage = self.errorMessageNonValidFunction
         self.showErrorMessage()
         return True
     
@@ -188,13 +190,8 @@ class Plotter(QDialog):
 
                 self.plot(x, y)
             except:
-                QMessageBox.warning(
-                    self,
-                    "Error",
-                    "Please, enter a valid function",
-                    QMessageBox.Ok,
-                    QMessageBox.Ok,
-                )
+                self.errorMessage = self.errorMessageNonValidFunction
+                self.showErrorMessage()
 
 
 def run():

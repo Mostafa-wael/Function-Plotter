@@ -1,108 +1,109 @@
-import random
-import sys
+from PySide2 import QtCore
+from main import Plotter
+import pytest
 
-import matplotlib.pyplot as plt
-from matplotlib.backends.backend_qt5agg import \
-    FigureCanvasQTAgg as FigureCanvas
-from matplotlib.backends.backend_qt5agg import \
-    NavigationToolbar2QT as NavigationToolbar
-from PySide2.QtGui import QIcon
-from PySide2.QtWidgets import (QApplication, QDialog, QGridLayout, QLabel,
-                               QLineEdit, QMessageBox, QPushButton,
-                               QVBoxLayout, QWidget)
 
-################################################################
-#Constants
-NUMBER_OF_SAMPLES = 50
-MAIN_WINDOW_TITLE = "Plotter"
-MAIN_WINDOW_LEFT = 80
-MAIN_WINDOW_TOP = 80
-MAIN_WINDOW_WIDTH = 600
-MAIN_WINDOW_HEIGHT = 600
-################################################################
+@pytest.fixture
+def app(qtbot):
+    tester = Plotter()
+    tester.testingMode = True
+    qtbot.addWidget(tester)
+    return tester
 
-class Plotter(QDialog):
-    def __init__(self, parent=None):
-        super().__init__()
-        # main window
-        self.setWindowTitle(MAIN_WINDOW_TITLE)
-        self.setGeometry(MAIN_WINDOW_LEFT, MAIN_WINDOW_TOP, MAIN_WINDOW_WIDTH, MAIN_WINDOW_HEIGHT)
-        
-        # attributes
-        self.x = list(range(NUMBER_OF_SAMPLES))
-        self.y = list(range(NUMBER_OF_SAMPLES))
-        
-        # create
-        self.createLayout()
+def test1_EMPTY_INPUTS(app, qtbot): # should start with the word "test"
+    qtbot.mouseClick(app.button, QtCore.Qt.LeftButton)
+    assert app.errorMessage == app.errorMessageMissingFields
 
-    def createCanvasWidget(self):
-        # a figure instance to plot on
-        self.figure = plt.figure()
-        # this is the Canvas Widget that displays the `figure`
-        # it takes the `figure` instance as a parameter to __init__
-        self.canvas = FigureCanvas(self.figure)
-        # create an axis
-        self.canvas.axes = self.figure.add_subplot(111)
-        # this is the Navigation widget
-        # it takes the Canvas widget and a parent
-        self.toolbar = NavigationToolbar(self.canvas, self)
-        
-    def createButton(self):
-        # Just some button connected to `plot` method
-        self.button = QPushButton('Plot')
-        self.button.clicked.connect(self.onClick)
-    
-    def createInputFunction(self):
-        self.InputFunctionField = QLineEdit(self)   
-        self.InputFunctionField.move(60,60)
+    app.InputFunctionField.setText("5*X^2+3*X")
+    app.lowerXField.setText("-10")
+    app.upperXField.setText("")
+    qtbot.mouseClick(app.button, QtCore.Qt.LeftButton)
+    assert app.errorMessage == app.errorMessageMissingFields
 
-        self.InputFunctionLabel = QLabel("f(x)")
-        self.InputFunctionLabel.move(20,20)
+    app.InputFunctionField.setText("5*X^2+3*X")
+    app.lowerXField.setText("")
+    app.upperXField.setText("10")
+    qtbot.mouseClick(app.button, QtCore.Qt.LeftButton)
+    assert app.errorMessage == app.errorMessageMissingFields
 
-    def createLayout(self):
-        self.createCanvasWidget()
-        self.createButton()
-        self.createInputFunction()
-        self.styleLayout()
+    app.InputFunctionField.setText("")
+    app.lowerXField.setText("-10")
+    app.upperXField.setText("10")
+    qtbot.mouseClick(app.button, QtCore.Qt.LeftButton)
+    assert app.errorMessage == app.errorMessageMissingFields
 
-    def styleLayout(self):
-        # set the layout
-        layout = QVBoxLayout()
-        layout.addWidget(self.toolbar)
-        layout.addWidget(self.canvas)
-        layout.addWidget(self.InputFunctionLabel)
-        layout.addWidget(self.InputFunctionField)
-        layout.addWidget(self.button)
-        self.setLayout(layout)
+def test2_NON_NUMERIC_LIMITS(app, qtbot):
+    app.lowerXField.setText("xx")
+    app.upperXField.setText("xx")
+    app.InputFunctionField.setText("5*X^2+3*X")
+    qtbot.mouseClick(app.button, QtCore.Qt.LeftButton)
+    assert app.errorMessage == app.errorMessageLimitsNotNumeric
 
-    def plot(self, x, y):
-        ''' plot some random stuff '''
-        # random data
-        data = [random.random() for i in range(10)]
+    app.lowerXField.setText("-10")
+    app.upperXField.setText("10x")
+    app.InputFunctionField.setText("5*X^2+3*X")
+    qtbot.mouseClick(app.button, QtCore.Qt.LeftButton)
+    assert app.errorMessage == app.errorMessageLimitsNotNumeric
 
-        # instead of ax.hold(False)
-        self.figure.clear()
-        self.canvas.axes.cla()  # Clear the canvas.
+    app.lowerXField.setText("-10x")
+    app.upperXField.setText("10")
+    app.InputFunctionField.setText("5*X^2+3*X")
+    qtbot.mouseClick(app.button, QtCore.Qt.LeftButton)
+    assert app.errorMessage == app.errorMessageLimitsNotNumeric
 
-        # create an axis
-        self.canvas.axes = self.figure.add_subplot(111)
+def test3_NON_ORDERED_LIMITS(app, qtbot):
+    app.lowerXField.setText("100")
+    app.upperXField.setText("0")
+    app.InputFunctionField.setText("5*X^2+3*X")
+    qtbot.mouseClick(app.button, QtCore.Qt.LeftButton)
+    assert app.errorMessage == app.errorMessageLimitsNotOrdered
 
-        # plot data
-        self.canvas.axes.plot(data, '*-')
+def test4_NON_VALID_FUNCTION(app, qtbot):
+    app.lowerXField.setText("-10")
+    app.upperXField.setText("10")
+    app.InputFunctionField.setText("np.sqrt(x)")
+    qtbot.mouseClick(app.button, QtCore.Qt.LeftButton)
+    assert app.errorMessage == app.errorMessageNonValidFunction
 
-        # refresh canvas
-        self.canvas.draw()
+def test5_VALID_FUNCTION(app, qtbot): #normal function
+    app.lowerXField.setText("-10")
+    app.upperXField.setText("10")
+    app.InputFunctionField.setText("5*X^2+3*X")
+    qtbot.mouseClick(app.button, QtCore.Qt.LeftButton)
+    assert app.errorMessage == None
 
-    def onClick(self):
-        self.plot(self.x, self.y)
+def test6_VALID_FUNCTION(app, qtbot): # log with -ve values and exp
+    app.lowerXField.setText("-10")
+    app.upperXField.setText("10")
+    # results in a warning for the log function due to the negative values
+    app.InputFunctionField.setText("log(x) + e**(x) + 5*x + log(2*x + 30) + e^(5*x)")
+    qtbot.mouseClick(app.button, QtCore.Qt.LeftButton)
+    assert app.errorMessage == None
 
-def run():
-    app = QApplication(sys.argv)
+def test7_VALID_FUNCTION(app, qtbot): # trignometric
+    app.lowerXField.setText("-10")
+    app.upperXField.setText("10")
+    app.InputFunctionField.setText("sin(x) + 3 * cos(x + 270) + tan(x + 180)")
+    qtbot.mouseClick(app.button, QtCore.Qt.LeftButton)
+    assert app.errorMessage == None
 
-    main = Plotter()
-    main.show()
+def test8_VALID_FUNCTION(app, qtbot): #normal function with differnet limits
+    app.lowerXField.setText("-1e-5")
+    app.upperXField.setText("0.5")
+    app.InputFunctionField.setText("5*X^2+3*X")
+    qtbot.mouseClick(app.button, QtCore.Qt.LeftButton)
+    assert app.errorMessage == None
 
-    sys.exit(app.exec_())
+def test8_VALID_FUNCTION(app, qtbot): #normal function with differnet limits
+    app.lowerXField.setText("-1e5")
+    app.upperXField.setText("1e5")
+    app.InputFunctionField.setText("5*X^2+3*X")
+    qtbot.mouseClick(app.button, QtCore.Qt.LeftButton)
+    assert app.errorMessage == None
 
-if __name__ == '__main__':
-    run()
+def test9_VALID_FUNCTION(app, qtbot): # extreme function
+    app.lowerXField.setText("-1e-5")
+    app.upperXField.setText("0.5")
+    app.InputFunctionField.setText("sqrt(sin(e^(x^2)) + 180) / 5*cos(log(X + 5) - 270)")
+    qtbot.mouseClick(app.button, QtCore.Qt.LeftButton)
+    assert app.errorMessage == None
