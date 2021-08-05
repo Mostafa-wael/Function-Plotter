@@ -1,38 +1,36 @@
-import random
+# imports
 import sys
-
 import matplotlib.pyplot as plt
-
-plt.style.use('dark_background')
 import numpy as np
-from matplotlib.backends.backend_qt5agg import \
-    FigureCanvasQTAgg as FigureCanvas
-from matplotlib.backends.backend_qt5agg import \
-    NavigationToolbar2QT as NavigationToolbar
-from PySide2.QtGui import QIcon
-from PySide2.QtWidgets import QApplication, QDialog, QGridLayout, QLabel, QLineEdit, QMessageBox, QPushButton, QVBoxLayout
+from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
+from matplotlib.backends.backend_qt5agg import  NavigationToolbar2QT as NavigationToolbar
+from PySide2.QtWidgets import QApplication, QDialog, QLabel, QLineEdit, QMessageBox, QPushButton, QVBoxLayout
 
 ################################################################
 # Constants
-NUMBER_OF_SAMPLES = 50
 MAIN_WINDOW_TITLE = "Function‌ ‌Plotter‌"
 MAIN_WINDOW_LEFT = 80
 MAIN_WINDOW_TOP = 80
 MAIN_WINDOW_WIDTH = 600
 MAIN_WINDOW_HEIGHT = 600
+MAIN_WINDOW_PRIMARY_COLOR = "#0f9fbf"
+MAIN_WINDOW_SECONDARY_COLOR = "black"
+
 ################################################################
-
-
 class Plotter(QDialog):
+    """ The main window of the Plotter
+    """
     def __init__(self, parent=None):
         super().__init__()
-        # main window
+        # main window parameters
         self.setWindowTitle(MAIN_WINDOW_TITLE)
-        self.setGeometry(
-            MAIN_WINDOW_LEFT, MAIN_WINDOW_TOP, MAIN_WINDOW_WIDTH, MAIN_WINDOW_HEIGHT
-        )
-        self.setStyleSheet("background-color:black;");
+        self.setGeometry(MAIN_WINDOW_LEFT, MAIN_WINDOW_TOP, MAIN_WINDOW_WIDTH, MAIN_WINDOW_HEIGHT)
+        self.setStyleSheet("background-color:" + MAIN_WINDOW_SECONDARY_COLOR + ";");
+        plt.style.use('dark_background')
         self.autoFillBackground = True
+
+        # attributes
+        self.primaryColor =  MAIN_WINDOW_PRIMARY_COLOR
 
         # error messages and testing
         self.testingMode = False
@@ -40,109 +38,133 @@ class Plotter(QDialog):
         self.errorMessage = None
         self.errorMessageMissingFields = "Please, complete all the fields"
         self.errorMessageLimitsNotNumeric = "Limits Must be Numbers Only"
-        self.errorMessageLimitsNotOrdered = "Upper limits must be greater than lower limit, we have exchaned them for you!"
+        self.errorMessageLimitsNotOrdered = "Upper limits must be greater than lower limit, we have exchanged them for you!"
         self.errorMessageNonValidFunction = "Please, enter a valid function"
         
-        # attributes
-        self.primaryColor =  "#0f9fbf"
-
         # create
-        self.createLayout()
+        self.__createLayout()
 
-    def createCanvas(self):
-        # a figure instance to plot on
+    def __createCanvas(self):
+        """ create a new Canvas to show the plot of the function
+        """
+        # create a canvas and pass a figure to it
         self.figure = plt.figure()
-        # this is the Canvas Widget that displays the `figure`
-        # it takes the `figure` instance as a parameter to __init__
         self.canvas = FigureCanvas(self.figure)
+
         # create an axis
         self.canvas.axes = self.figure.add_subplot(111)
         self.canvas.axes.set_title("Plot")
-        # this is the Navigation widget
-        # it takes the Canvas widget and a parent
+
+        # create Navigation widget and pass a Canvas widget and the parent
         self.toolbar = NavigationToolbar(self.canvas, self)
 
-    def createButton(self):
-        # Just some button connected to `plot` method
-        self.button = QPushButton("Plot")
-        self.button.setShortcut("Ctrl+P")
-        self.button.clicked.connect(self.onClick)
+    def __createButton(self):
+        """create the plot button
+        """
+        self.button = QPushButton("Plot") # text diplayed on the button
+        self.button.setShortcut("Ctrl+P") # adding a shortcut 
+        self.button.clicked.connect(self.__onClick) # connect it to the __onClick function
 
-    def createInputFunction(self):
+    def __createInputFunction(self):
+        """create the text iput filed for the function and a label to it
+        """
         self.InputFunctionLabel = QLabel("f(x)")
 
         self.InputFunctionField = QLineEdit(self)
-        self.InputFunctionField.setPlaceholderText("5*x^3 + 2*x")  # 5 * x ^ 3 + 2 * x
+        self.InputFunctionField.setPlaceholderText("5*x^3 + 2*x")
 
-    def createLimits(self):
-        self.lowerXLabel = QLabel("lowerX")
+    def __createLimits(self):
+        """ create the label and the text input field for the limits of (X)
+        """
+        self.lowerXLabel = QLabel("lower limits of (x)")
         self.lowerXField = QLineEdit(self)
         self.lowerXField.setPlaceholderText("-10")
 
-        self.upperXLabel = QLabel("upperX")
+        self.upperXLabel = QLabel("upper limits of (x)")
         self.upperXField = QLineEdit(self)
         self.upperXField.setPlaceholderText("10")
 
-    def createLayout(self):
-        self.createCanvas()
-        self.createButton()
-        self.createInputFunction()
-        self.createLimits()
-        self.styleLayout()
+    def __createLayout(self): 
+        """Create the widgets for the main window
+        """
+        self.__createCanvas()
+        self.__createButton()
+        self.__createInputFunction()
+        self.__createLimits()
+        self.__styleLayout()
 
-    def styleLayout(self):
-        fonts = "font-family:Times; font: bold; color:" + self.primaryColor + "; font-size: 15px"
+    def __styleLayout(self): 
+        """ style the layout and set them in the proper order
+        """
+        style = "font-family:Times; font: bold; color:" + self.primaryColor + "; font-size: 15px"
         # set the layout
         layout = QVBoxLayout()
+
+        # canvas 
         layout.addWidget(self.toolbar)
         layout.addWidget(self.canvas)
         self.toolbar.setStyleSheet("background-color:" + self.primaryColor + ";")
 
+        # lower limits of X
         layout.addWidget(self.lowerXLabel)
         layout.addWidget(self.lowerXField)
-        self.lowerXLabel.setStyleSheet(fonts)
+        self.lowerXLabel.setStyleSheet(style)
         self.lowerXField.setStyleSheet("background-color:" + self.primaryColor + ";")
 
+        # upper limits of X
         layout.addWidget(self.upperXLabel)
         layout.addWidget(self.upperXField)
-        self.upperXLabel.setStyleSheet(fonts)
+        self.upperXLabel.setStyleSheet(style)
         self.upperXField.setStyleSheet("background-color:" + self.primaryColor + ";")
 
-
+        # the input function
         layout.addWidget(self.InputFunctionLabel)
         layout.addWidget(self.InputFunctionField)
-        self.InputFunctionLabel.setStyleSheet(fonts)
+        self.InputFunctionLabel.setStyleSheet(style)
         self.InputFunctionField.setStyleSheet("background-color:" + self.primaryColor + ";")
 
-
+        # the plot button
         layout.addWidget(self.button)
-        self.button.setStyleSheet(fonts)
+        self.button.setStyleSheet(style)
 
         self.setLayout(layout)
 
-    def showErrorMessage(self):
-        if self.testingMode == False and self.errorMessage != "":    
-            self.setStyleSheet("QMessageBox{background:  self.primaryColor; }");
+    def __showErrorMessage(self):
+        """responsible for showing the error messages
+        """
+        # show messages if not in the test mode and there is an errorMessage
+        if self.testingMode == False and self.errorMessage != None:    
+            self.setStyleSheet("QMessageBox{background:  self.primaryColor; }"); # change the color theme in case of an error
             self.msgBox.warning(self, "Error", self.errorMessage, QMessageBox.Ok, QMessageBox.Ok)
-            self.setStyleSheet("background-color:black;");
+            self.setStyleSheet("background-color:" + MAIN_WINDOW_SECONDARY_COLOR + ";"); # return the color theme to its original
 
-    def validateInput(self, fx, ux, lx):
+    def __validateInput(self, fx: str, ux:str, lx:str) -> bool:
+        """ used to validate the input fields
+
+        Args:
+            fx (str): the input function
+            ux (str): upper limits of X
+            lx (str): lower limits of X
+
+        Returns:
+            bool: whether it is valid or not
+        """
         # validate the input fields
         if fx == "" or ux == "" or lx == "":
             self.errorMessage = self.errorMessageMissingFields
-            self.showErrorMessage()
+            self.__showErrorMessage()
             return False
 
         # validate the limits
         self.lowerX = lx
         self.upperX = ux
-        # check for numbers
+        # check if numeric
         try:
             self.upperX = float(self.upperX)
             self.lowerX = float(self.lowerX)
         except:
             self.errorMessage =  self.errorMessageLimitsNotNumeric
-            self.showErrorMessage()
+            self.__showErrorMessage()
             return False
         
         # check for inquality
@@ -152,24 +174,26 @@ class Plotter(QDialog):
             self.lowerXField.setText(str(self.upperX))
             self.lowerX, self.upperX = self.upperX, self.lowerX
         ##################################
-        # validate and processthe input function
+        # validate and process the input function
         self.inputFunction = fx
         try:
-            self.inputFunction = self.inputFunction.replace(" ", "")
-            self.inputFunction = self.inputFunction.replace("^", "**")
-            self.inputFunction = self.inputFunction.replace("sqrt", "np.sqrt")
-            self.inputFunction = self.inputFunction.replace("e**", "np.exp")  # e**(x)
-            self.inputFunction = self.inputFunction.replace("log", "np.log")  # log(x)
-            self.inputFunction = self.inputFunction.replace("sin", "np.sin")
-            self.inputFunction = self.inputFunction.replace("cos", "np.cos")
-            self.inputFunction = self.inputFunction.replace("tan", "np.tan")
+            self.inputFunction = self.inputFunction.replace(" ", "").replace("^", "**").replace("sqrt", "np.sqrt")
+            self.inputFunction = self.inputFunction.replace("e**", "np.exp").replace("log", "np.log")  
+            self.inputFunction = self.inputFunction.replace("sin", "np.sin").replace("cos", "np.cos").replace("tan", "np.tan")
+
         except:
             self.errorMessage = self.errorMessageNonValidFunction
-        self.showErrorMessage()
+        self.__showErrorMessage()
         return True
     
-    def plot(self, x, y):
-        # clear
+    def plot(self, x: list, y:list):
+        """ used to plot a function on the canvas
+
+        Args:
+            x (list): the input 
+            y (list): the output
+        """
+        # clear the figure
         self.figure.clear()
         # create an axis
         self.canvas.axes = self.figure.add_subplot(111)
@@ -178,26 +202,30 @@ class Plotter(QDialog):
         # refresh canvas
         self.canvas.draw()
 
-    def onClick(self):
-        if self.validateInput(
+    def __onClick(self):
+        """take any needded action after clicking the button
+        """
+        # check if all inputs are valid
+        if self.__validateInput(
             self.InputFunctionField.text().lower(),
             self.upperXField.text(),
             self.lowerXField.text(),
         ) == True:
             try:
-                x = np.linspace(self.lowerX, self.upperX, NUMBER_OF_SAMPLES)
-                y = eval(self.inputFunction)  # divide according to the + then, sum them
-
-                self.plot(x, y)
+                x = np.linspace(self.lowerX, self.upperX) # create the data on the x-axis
+                y = eval(self.inputFunction) # evalute the function
+                self.plot(x, y) 
             except:
                 self.errorMessage = self.errorMessageNonValidFunction
-                self.showErrorMessage()
+                self.__showErrorMessage()
 
-
+################################################################
 def run():
-    app = QApplication(sys.argv)
+    """ execute the program
+    """
+    app = QApplication(sys.argv) # create the application
 
-    main = Plotter()
+    main = Plotter() # create object of the Plotter -main window-
     main.show()
 
     sys.exit(app.exec_())

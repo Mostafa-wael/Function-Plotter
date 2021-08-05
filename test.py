@@ -2,8 +2,8 @@ from PySide2 import QtCore
 from main import Plotter
 import pytest
 
-
-@pytest.fixture
+# pytest test.py
+@pytest.fixture # Functions that must be executed before running the test functions
 def app(qtbot):
     tester = Plotter()
     tester.testingMode = True
