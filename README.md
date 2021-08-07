@@ -5,7 +5,8 @@
 A‌ ‌Python‌ ‌GUI‌ ‌program‌ ‌that‌ ‌plots‌ ‌arbitrary‌ user-entered‌ ‌function.‌ Taking ‌min‌ ‌and‌ ‌max‌ ‌values‌ ‌of‌ ‌x‌ ‌from‌ ‌the‌ ‌user.‌ ‌e.g.,‌ ‌5*x^3‌ ‌+‌ ‌2*x.‌ ‌
 The‌ ‌following‌ ‌operators‌ ‌are‌ ‌supported:‌ (‌+‌ ‌-‌ ‌/‌ ‌*‌ ‌^), 
 logarithmic and trigonometric function are also supported by installing numpy.
-Documented using Docstrings.
+
+Documented using Docstrings and tested using pytest.
 
 ## Installation of the requirements:
 
