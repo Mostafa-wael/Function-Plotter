@@ -33,7 +33,7 @@ class Plotter(QDialog):
         self.primaryColor =  MAIN_WINDOW_PRIMARY_COLOR
 
         # error messages and testing
-        self.testingMode = False
+        self.testingMode = False # print messages in case of testing
         self.msgBox = QMessageBox() 
         self.errorMessage = None
         self.errorMessageMissingFields = "Please, complete all the fields"
@@ -52,7 +52,7 @@ class Plotter(QDialog):
         self.canvas = FigureCanvas(self.figure)
 
         # create an axis
-        self.canvas.axes = self.figure.add_subplot(111)
+        self.canvas.axes = self.figure.add_subplot(1, 1, 1) # 1X1 grid, 1st subplot
         self.canvas.axes.set_title("Plot")
 
         # create Navigation widget and pass a Canvas widget and the parent
@@ -138,6 +138,7 @@ class Plotter(QDialog):
             self.msgBox.warning(self, "Error", self.errorMessage, QMessageBox.Ok, QMessageBox.Ok)
             self.setStyleSheet("background-color:" + MAIN_WINDOW_SECONDARY_COLOR + ";"); # return the color theme to its original
             self.errorMessage = None
+    
     def __validateInput(self, fx: str, ux:str, lx:str) -> bool:
         """ used to validate the input fields
 
@@ -186,7 +187,7 @@ class Plotter(QDialog):
         self.__showErrorMessage()
         return True
     
-    def plot(self, x: list, y:list):
+    def __plot(self, x: list, y:list):
         """ used to plot a function on the canvas
 
         Args:
@@ -214,7 +215,7 @@ class Plotter(QDialog):
             try:
                 x = np.linspace(self.lowerX, self.upperX) # create the data on the x-axis
                 y = eval(self.inputFunction) # evalute the function
-                self.plot(x, y) 
+                self.__plot(x, y) 
             except Exception as e:
                 self.errorMessage = self.errorMessageNonValidFunction + ", " + str(e)
                 self.__showErrorMessage()
